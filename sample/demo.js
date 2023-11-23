@@ -8,7 +8,7 @@ function start() {
   // in the other included script
   var obj_model = my_model;
 
-  // initialize a variable that contains the gl enum for the 
+  // initialize a variable that contains the proper gl enum for the 
   // size of our triangle index elements
   var triangleIndexSize = gl.UNSIGNED_INT;
   switch (obj_model.triangleIndices.BYTES_PER_ELEMENT) {
@@ -19,7 +19,7 @@ function start() {
       triangleIndexSize = gl.UNSIGNED_SHORT;
       break;
     case 4:
-      // have to enable the extension that allows uint32 as triangle indices
+      // for uint32, we have to enable the extension that allows uint32 as triangle indices
       gl.getExtension('OES_element_index_uint');
       triangleIndexSize = gl.UNSIGNED_INT;
       break;
@@ -112,14 +112,15 @@ function start() {
     var target = [0, 0, 0];
     var up = [0, 1, 0];
 
+    // set up model transform
     // somewhat arbitrarily, let's make the model 200 units tall/wide/high
-    // and centered at the origin of the wcs
-    var tModel = mat4.create();
+    // with its center at the origin of the wcs
     w = obj_model.bboxMax[0] - obj_model.bboxMin[0]
     h = obj_model.bboxMax[1] - obj_model.bboxMin[1]
     d = obj_model.bboxMax[2] - obj_model.bboxMin[2]
     s = 200 / Math.max(w, h, d);
     // make our coord system bigger/smaller
+    var tModel = mat4.create();
     mat4.fromScaling(tModel, [s, s, s])
     // rotate our coord system according to slider2
     mat4.rotate(tModel, tModel, angle2, [w, h, d]);
@@ -130,9 +131,11 @@ function start() {
       -(obj_model.bboxMax[2] + obj_model.bboxMin[2]) / 2];
     mat4.translate(tModel, tModel, offset);
 
+    // set up camera transform
     var tCamera = mat4.create();
     mat4.lookAt(tCamera, eye, target, up);
 
+    // set up projection transform
     var tProjection = mat4.create();
     mat4.perspective(tProjection, Math.PI / 4, 1, 10, 1000);
 
