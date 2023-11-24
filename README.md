@@ -45,11 +45,13 @@ Stats:
 
 Tranlsated 'models/Gear1.obj' to model 'my_model' in 'sample/Gear1.js' in 0.290 sec.
 ```
-3. Test your conversion using the webgl example in the `sample` folder: 
-a. Modify the `demo.html` file to include your `.js` file before the inclusion of `demo.js`
-b. If you used a 3rd parameter when running `obj_to_js.py` to specify a custom model name, replace occurrences of `my_model` in `demo.js` with your model name.
+3. Test your conversion using the webgl example in the [`sample` folder](https://github.com/elbrandt/ObjToJs/tree/main/sample):
 
-The demo program has been written to load a model that is defined by a `.js` from this utility. It will set the camera to make entire model visible and provide simple sliders to move the camera and rotate the model. 
+ a. Modify the `demo.html` file to include your `.js` file before the inclusion of `demo.js`
+ 
+ b. If you used a 3rd parameter when running `obj_to_js.py` to specify a custom model name, replace occurrences of `my_model` in `demo.js` with your model name. (The optional 3rd parameter is provided to allow for easy inclusion of more than one different model in a webgl scene.)
+
+The demo program [here](https://github.com/elbrandt/ObjToJs/tree/main/sample) has been written to load a model that is defined by a `.js` from this utility. It will set the camera to make entire model visible and provide simple sliders to move the camera and rotate the model. 
 
 ## Limitations
 - This utility only supports translating polygonal face objects in the `.obj` file.  Specifically, it reads only the following element types:
