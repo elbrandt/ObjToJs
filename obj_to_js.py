@@ -139,6 +139,13 @@ def write_js(file, obj, model_name, stats):
             f.write(' ' + s)
             f.write(',' if tidx != num_verts - 1 else ']);\n\n')
 
+    def check_all_vt_present(obj):
+        for idx in obj['idx_to_verts']:
+            vt_idx = obj['idx_to_verts'][idx]
+            if vt_idx[1] is None or vt_idx[1] >= len(obj['vt']):
+                return False
+        return True
+
     with open(file, 'w') as f:
         # write some comments at the beginning
         f.write(
@@ -183,7 +190,7 @@ def write_js(file, obj, model_name, stats):
                          f'{model_name}.vertexNormals')
 
         # write list of vertex texture coordinates (if we have them)
-        if len(obj['vt']) > 0:
+        if len(obj['vt']) > 0 and check_all_vt_present(obj):
             write_point_list(
                 f, obj, 'vt', 1, 'vertex texture coordinates', f'{model_name}.vertexTextureCoords')
         else:
