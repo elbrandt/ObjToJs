@@ -62,7 +62,7 @@ The demo program has been written to load a model that is defined by a `.js` fro
 
 - It does not support negative index references (not common in `*.obj` files, but possible per the spec).
 
-- It does translate vertex texture coordinates if present in the `.obj` file, but does not provide any additional support to load or assign textures to the model in the output `.js` file.
+- While it *does* translate vertex texture coordinates if present in the `.obj` file, it *does not* provide any additional support to load or assign textures to the model in the output `.js` file.
 
 - It has been tested on Python 3.9.x. It doesn't use any non-standard Python modules. It should be compatible with earlier Python 3.x versions as well, but this has not been tested.
 
@@ -70,3 +70,6 @@ The demo program has been written to load a model that is defined by a `.js` fro
 
 ## Disclaimer
 This utility has been tested on a relatively small sample of the wide world of `.obj` files available on the internet. There are probably weird-but-valid `.obj` files that will cause the script to fail. If you encounter such an `.obj` file, let the authors know, we'd be interested in taking a look.
+
+## Screenshot
+![image](sample/screenshot.png)
