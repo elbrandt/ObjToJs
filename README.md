@@ -1,12 +1,12 @@
 # ObjToJs
 
-`obj_to_js` is a simple Python script that converts a Wavefront `*.obj` format file to a Javascript file containing array definitions for Vertex Positions and Vertex Normals that can more easily be used in Javascript webgl applications.
+`obj_to_js` is a simple Python script that converts a Wavefront `*.obj` format file to a Javascript file containing array definitions for Vertex Positions, Vertex Normals, and Triangle Indices that can more easily be used in Javascript webgl applications.
 
 This utility is written specifically to support UW Madison's CS559 Computer Graphics class, but may be useful in other venues.
 
 ## Usage
 
-Usage information is avaiable via the command lin with the `-h` option:
+Usage information is available via the command line with the `-h` option:
 ```
 $ python obj_to_js.py -h
 usage: Obj to Js Converter [-h] in_file [out_file] [model_name]
@@ -26,7 +26,7 @@ Additional info available at https://github.com/elbrandt/ObjToJs
 
 ## Example Usage
 
-1. Find an interesting `.obj` file on the internet and download it
+1. Find an interesting `.obj` file on the internet and download it (or craft your own)
 2. Translate it to a `.js` file using the `obj_to_js.py` script:
 ```
 $ python obj_to_js.py models/Gear1.obj sample/Gear1.js
