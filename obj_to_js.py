@@ -1,5 +1,6 @@
 #
 # .obj to .js converter helper for UW Madison CS559
+# Copyright 2023 Eric Brandt & Sangeetha Grama Srinivasan
 #
 import itertools
 import sys
@@ -191,7 +192,7 @@ def write_js(file, obj, model_name, stats):
 
 def obj_to_js(obj_fil_in, js_fil_out, model_name):
     print(
-        f"\nTranlsating '{obj_fil_in}' to '{js_fil_out}'...")
+        f"\nTranslating '{obj_fil_in}' to '{js_fil_out}'...")
 
     # give the model a default name if one is not provided
     if model_name is None or len(model_name) == 0:
@@ -217,9 +218,9 @@ def obj_to_js(obj_fil_in, js_fil_out, model_name):
     # print some final stats
     print('Stats:')
     for stat in stats:
-        print(f'\t{stat:19}: {stats[stat]}')
+        print(f'\t{stat:25}: {stats[stat]}')
     print(
-        f"\nTranlsated '{obj_fil_in}' to model '{model_name}' in '{js_fil_out}' in {tm_finish-tm_start:0.3f} sec.")
+        f"\nTranslated '{obj_fil_in}' to model '{model_name}' in '{js_fil_out}' in {tm_finish-tm_start:0.3f} sec.")
 
 
 def main():
