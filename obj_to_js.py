@@ -11,15 +11,31 @@ import math
 import argparse
 
 
-def calc_vertex_normals(obj):
-    obj['vn'] = []
-    obj['fvn'] = []
-    # for each triangle:
-    # 1. calculate the normal, 2. enter it into the vn list, 3. add its index to the fvn list
-    for idx in range(len(obj['fv']) // 3):
-        p1 = obj['v'][obj['fv'][idx * 3 + 0]]
-        p2 = obj['v'][obj['fv'][idx * 3 + 1]]
-        p3 = obj['v'][obj['fv'][idx * 3 + 2]]
+def read_obj(file):
+    # read an obj file and return a dictionary of v, vn, vt, and f elements
+    def parsev(toks, qty):
+        f = [float(t) for t in toks]
+        while len(f) < qty:
+            f.append(0.0)
+        return tuple(f[0:qty])
+
+    def splitn(str, s, n):
+        ret = str.split(s)
+        ret.extend([''] * n)
+        return ret[0:n]
+
+    def parsef(toks):
+        sp = [splitn(s, '/', 3) for s in toks]
+        v = [tuple([None if (m is None or len(m) == 0) else int(m)-1 for m in n])
+             for n in sp]
+        # split an n-vertex polygon face into n-2 triangles
+        return [[v[0], v[i-1], v[i]] for i in range(2, len(v))]
+
+    def calc_vertex_normal(tri, obj, vn_to_idx):
+
+        p1 = obj['v'][tri[0][0]]
+        p2 = obj['v'][tri[1][0]]
+        p3 = obj['v'][tri[2][0]]
 
         v1 = [p2[i]-p1[i] for i in range(3)]
         v2 = [p3[i]-p1[i] for i in range(3)]
@@ -31,38 +47,29 @@ def calc_vertex_normals(obj):
 
         # normalize
         l = math.sqrt(nx*nx+ny*ny+nz*nz)
-        vn = [nx / l, ny / l, nz / l] if l != 0 else [0.0, 0.0, 0.0]
+        vn = (nx / l, ny / l, nz / l) if l != 0 else (0.0, 0.0, 0.0)
 
-        obj['vn'].append(vn)
-        obj['fvn'] += [idx] * 3
+        if vn in vn_to_idx:
+            idx = vn_to_idx[vn]
+        else:
+            idx = len(obj['vn'])
+            vn_to_idx[vn] = idx
+            obj['vn'].append(vn)
+        return tuple([(i[0], i[1], idx) for i in tri])
 
-
-def read_obj(file):
-    # read an obj file and return a dictionary of v, vn, vt, and f elements
-    def parsev(toks, qty):
-        f = [float(t) for t in toks]
-        while len(f) < qty:
-            f.append(0.0)
-        return f[0:qty]
-
-    def splitn(str, s, n):
-        ret = str.split(s)
-        ret.extend([''] * n)
-        return ret[0:n]
-
-    def parsef(toks):
-        sp = [splitn(s, '/', 3) for s in toks]
-        v = [[None if (m is None or len(m) == 0) else int(m)-1 for m in n]
-             for n in sp]
-        # split an n-vertex polygon face into n-2 triangles
-        ret = [[v[0], v[i-1], v[i]] for i in range(2, len(v))]
-        return list(itertools.chain(*ret))
+    vert_idx = 0
+    verts_to_idx = {}
+    idx_to_verts = {}
 
     with open(file, 'r') as fil:
         ret = {'v': [], 'vt': [], 'vn': [], 'fname': file}
-        tris = []
+        tri_indices = []
+        creating_normals = None
+        vn_to_idx = {}
+
         for line in fil:
             tok = line.split()
+
             if len(tok) >= 1:
                 if tok[0] == 'v':
                     ret['v'].append(parsev(tok[1:], 3))
@@ -71,28 +78,40 @@ def read_obj(file):
                 if tok[0] == 'vn':
                     ret['vn'].append(parsev(tok[1:], 3))
                 if tok[0] == 'f':
-                    tris += parsef(tok[1:])
-    (ret['fv'], ret['fvt'], ret['fvn']) = zip(*tris)
+                    creating_normals = (
+                        len(ret['vn']) == 0) if creating_normals is None else creating_normals
+                    face_tris = parsef(tok[1:])
+                    for tri in face_tris:
+                        if creating_normals:
+                            tri = calc_vertex_normal(tri, ret, vn_to_idx)
+                        for t in tri:
+                            if t not in verts_to_idx:
+                                verts_to_idx[t] = vert_idx
+                                idx_to_verts[vert_idx] = t
+                                tri_indices.append(vert_idx)
+                                vert_idx += 1
+                            else:
+                                tri_indices.append(verts_to_idx[t])
 
-    if len(ret['vn']) == 0 or None in ret['fvn']:
-        print('NOTE: vertex normals not present in .obj file. Creating vertex normals.')
-        calc_vertex_normals(ret)
+    ret['tris'] = tri_indices
+    ret['idx_to_verts'] = idx_to_verts
+
     return ret
 
 
 def gather_stats(obj):
     # gather statistics on the obj dictionary and return a stats dictionary
     stats = {}
-    stats['# unique vertices'] = len(obj['v'])
-    stats['# unique normals'] = len(obj['vn']) if None not in obj['vn'] else 0
-    stats['# unique tex coords'] = len(
+    stats['unique vertex positions'] = len(obj['v'])
+    stats['unique vertex normals'] = len(
+        obj['vn']) if None not in obj['vn'] else 0
+    stats['unique vertex tex coords'] = len(
         obj['vt'])
-    stats['# total vertices'] = len(obj['fv'])
-    stats['# total normals'] = len(
-        obj['fv']) if None not in obj['fvn'] else 0
-    stats['# total tex coords'] = len(
-        obj['fv']) if None not in obj['fvt'] else 0
-    stats['# triangles'] = len(obj['fv']) // 3
+    stats['total vertices'] = len(obj['idx_to_verts'])
+    stats['total normals'] = len(obj['idx_to_verts'])
+    stats['total tex coords'] = len(
+        obj['idx_to_verts']) if len(obj['vt']) > 0 else 0
+    stats['triangles'] = len(obj['tris']) // 3
     bb_min = [sys.float_info.max] * 3
     bb_max = [-sys.float_info.max] * 3
     for v in obj['v']:
@@ -107,17 +126,16 @@ def gather_stats(obj):
 def write_js(file, obj, model_name, stats):
     # write the obj dictionary to a javascript file
 
-    def write_point_list(f, obj, nm, comment, var_name):
-        if len(obj['f' + nm]) == 0:
-            return
+    def write_point_list(f, obj, nm, ord, comment, var_name):
+        d = obj['idx_to_verts']
 
         f.write(f'// {comment}\n')
         f.write(f'{var_name} = new Float32Array([')
-        num_verts = len(obj['f' + nm])
-        for tidx in range(num_verts):
-            vidx = obj['f' + nm][tidx]
-            str = ', '.join([f'{i}' for i in obj[nm][vidx]])
-            f.write(f" {str}")
+        num_verts = len(d)
+        for tidx in range(len(d)):
+            vidx = d[tidx][ord]
+            s = ', '.join([str(i) for i in obj[nm][vidx]])
+            f.write(' ' + s)
             f.write(',' if tidx != num_verts - 1 else ']);\n\n')
 
     with open(file, 'w') as f:
@@ -127,15 +145,15 @@ def write_js(file, obj, model_name, stats):
         f.write(
             f"// See https://github.com/elbrandt/ObjToJs for more info\n\n")
         for stat in stats:
-            f.write(f'// {stat:20}: {stats[stat]}\n')
+            f.write(f'// {stat:25}: {stats[stat]}\n')
         f.write('\n')
-        if len(obj['fv']) < (1 << 8):
+        if len(obj['idx_to_verts']) < (1 << 8):
             dtype = 'Uint8Array'
-        elif len(obj['fv']) < (1 << 16):
+        elif len(obj['idx_to_verts']) < (1 << 16):
             dtype = 'Uint16Array'
         else:
             dtype = 'Uint32Array'
-        f.write('// {:20}: {}\n'.format('triangleIndices type', dtype))
+        f.write('// {:25}: {}\n'.format('triangleIndices type', dtype))
 
         # the object
         f.write('// the object\n')
@@ -151,26 +169,22 @@ def write_js(file, obj, model_name, stats):
         # Write triangle element index array
         f.write('// element index array\n')
         f.write(f'{model_name}.triangleIndices = new {dtype}([')
-        assert (len(obj['fv']) % 3 == 0)
-        num_tris = len(obj['fv']) // 3
-        for t in range(num_tris):
-            idxs = [t*3, t*3+1, t*3+2]
-            str = ', '.join([f'{i}' for i in idxs])
-            f.write(f" {str}")
-            f.write(',' if t != num_tris - 1 else ']);\n\n')
+        assert (len(obj['tris']) % 3 == 0)
+        f.write(', '.join([str(i) for i in obj['tris']]))
+        f.write(']);\n\n')
 
         # write list of vertex positions
-        write_point_list(f, obj, 'v', 'vertex positions',
+        write_point_list(f, obj, 'v', 0, 'vertex positions',
                          f'{model_name}.vertexPos')
 
         # write list of vertex normals
-        write_point_list(f, obj, 'vn', 'vertex normals',
+        write_point_list(f, obj, 'vn', 2, 'vertex normals',
                          f'{model_name}.vertexNormals')
 
         # write list of vertex texture coordinates (if we have them)
-        if None not in obj['fvt'] and len(obj['vt']) > 0:
+        if len(obj['vt']) > 0:
             write_point_list(
-                f, obj, 'vt', 'vertex texture coordinates', f'{model_name}.vertexTextureCoords')
+                f, obj, 'vt', 1, 'vertex texture coordinates', f'{model_name}.vertexTextureCoords')
         else:
             print('\nNOTE: Skipping writing vertex texture coordinates to .js because they were not present (or incomplete) in .obj file.')
 
