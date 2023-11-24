@@ -62,8 +62,6 @@ The demo program [here](https://github.com/elbrandt/ObjToJs/tree/main/sample) ha
 
 - It does not support any of the curve or surface specifications.
 
-- It does not support negative index references (not common in `*.obj` files, but possible per the spec).
-
 - While it *does* translate vertex texture coordinates if present in the `.obj` file, it *does not* provide any additional support to load or assign textures to the model in the output `.js` file.
 
 - It has been tested on Python 3.9.x. It doesn't use any non-standard Python modules. It should be compatible with earlier Python 3.x versions as well, but this has not been tested.

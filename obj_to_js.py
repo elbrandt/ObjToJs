@@ -25,10 +25,22 @@ def read_obj(file):
         ret.extend([''] * n)
         return ret[0:n]
 
-    def parsef(toks):
+    def adjust_idx(f, obj):
+        f = [int(i) if (type(i) is str and len(i) > 0) else None for i in f]
+        if type(f[0]) is int:
+            f[0] = f[0] - 1 if f[0] > 0 else len(obj['v']) + f[0]
+        if type(f[1]) is int:
+            f[1] = f[1] - 1 if f[1] > 0 else len(obj['vt']) + f[1]
+        if type(f[2]) is int:
+            f[2] = f[2] - 1 if f[2] > 0 else len(obj['vn']) + f[2]
+        return tuple(f)
+
+    def parsef(toks, obj):
+        # in: list of n strings like:
+        #   ['1', '2', '3'] or ['1/2/3', '4/5/6', ...] or ['1//2', '3//4', ...] or ['-1/-2/-3', '-4/-5/-6' ...] or variants thereof
+        # out: list of 3-tuples
         sp = [splitn(s, '/', 3) for s in toks]
-        v = [tuple([None if (m is None or len(m) == 0) else int(m)-1 for m in n])
-             for n in sp]
+        v = [adjust_idx(n, ret) for n in sp]
         # split an n-vertex polygon face into n-2 triangles
         return [[v[0], v[i-1], v[i]] for i in range(2, len(v))]
 
@@ -81,7 +93,7 @@ def read_obj(file):
                 if tok[0] == 'f':
                     creating_normals = (
                         len(ret['vn']) == 0) if creating_normals is None else creating_normals
-                    face_tris = parsef(tok[1:])
+                    face_tris = parsef(tok[1:], ret)
                     for tri in face_tris:
                         if creating_normals:
                             tri = calc_vertex_normal(tri, ret, vn_to_idx)
